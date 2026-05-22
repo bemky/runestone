@@ -46,16 +46,23 @@ class Runestone::Model < ActiveRecord::Base
       if data[key].is_a?(Hash)
         str[key] = highlight_data(data[key], hlights, value)
       elsif data[key].is_a?(Array)
-        str[key] = data[key].map { |i| highlight_data(i, hlights, value) }
+        str[key] = data[key].map { |i| i.is_a?(Hash) ? highlight_data(i, hlights, value) : highlight_string(i, hlights.shift) }
       else
-        str[key] = data[key].dup
-        hlights.shift.scan(/\<\/?b\>/) do |match|
-          str[key].insert($~.begin(0), $&)
-        end
+        str[key] = highlight_string(data[key], hlights.shift)
       end
     end
 
     str
+  end
+
+  def self.highlight_string(value, headline)
+    return value if headline.nil?
+
+    result = value.dup
+    headline.scan(/\<\/?b\>/) do |match|
+      result.insert($~.begin(0), $&)
+    end
+    result
   end
 
   def self.get_highlights(words, query, prefix: nil, dictionary: nil)
