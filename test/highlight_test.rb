@@ -30,11 +30,11 @@ class HighlightTest < ActiveSupport::TestCase
     runestone do
       index :name
       index 'addresses.name', weight: 3
-      index :tokens, weight: 2
+      index :tags, weight: 2
 
       attribute(:name)
       attribute(:addresses) { addresses.map{ |a| a&.attributes&.slice('id', 'name') } }
-      attribute(:tokens) { name.to_s.split(' ') }
+      attribute(:tags) { metadata&.split(',') }
     end
   end
 
@@ -47,31 +47,29 @@ class HighlightTest < ActiveSupport::TestCase
     tsmodels = Runestone::Model.search('state')
     Runestone::Model.highlight(tsmodels, 'state')
     assert_equal([
+      { "name"=>"address of state duo" },
       {
         "name"=>"Big state building",
-        "addresses"=> [{"id" => duo.id, "name"=>"address of state duo"}],
-        "tokens"=> ["Big", "state", "building"]
+        "addresses"=> [{"id" => duo.id, "name"=>"address of state duo"}]
       },
       {
         "name"=>"Empire state building",
-        "addresses"=> [{"id" => uno.id, "name"=>"address uno"}],
-        "tokens"=> ["Empire", "state", "building"]
+        "addresses"=> [{"id" => uno.id, "name"=>"address uno"}]
       },
-      { "name"=>"address of state duo" }
+
     ], tsmodels.map(&:data))
 
     assert_equal([
+      { "name"=>"address of <b>state</b> duo" },
       {
         "name"=>"Big <b>state</b> building",
-        "addresses"=> [{"id" => duo.id, "name"=>"address of <b>state</b> duo"}],
-        "tokens"=> ["Big", "<b>state</b>", "building"]
+        "addresses"=> [{"id" => duo.id, "name"=>"address of <b>state</b> duo"}]
       },
       {
         "name"=>"Empire <b>state</b> building",
-        "addresses"=> [{"id" => uno.id, "name"=>"address uno"}],
-        "tokens"=> ["Empire", "<b>state</b>", "building"]
+        "addresses"=> [{"id" => uno.id, "name"=>"address uno"}]
       },
-      { "name"=>"address of <b>state</b> duo" }
+
     ], tsmodels.map(&:highlights))
   end
   
@@ -86,8 +84,7 @@ class HighlightTest < ActiveSupport::TestCase
     assert_equal([
       {
         "name"=>"<b>Émpire</b> state building",
-        "addresses"=>[ {"id" => uno.id, "name"=>"address uno"} ],
-        "tokens"=>["<b>Émpire</b>", "state", "building"]
+        "addresses"=>[ {"id" => uno.id, "name"=>"address uno"} ]
       }
     ], tsmodels.map(&:highlights))
 
@@ -96,9 +93,22 @@ class HighlightTest < ActiveSupport::TestCase
     assert_equal([
       {"name"=>"<b>address</b> uno"},
       {"name"=>"<b>addréss</b> of state duo"},
-      {"name"=>"Émpire state building", "addresses"=>[{"id" => uno.id, "name"=>"<b>address</b> uno"}], "tokens"=>["Émpire", "state", "building"]},
-      {"name"=>"Big state building", "addresses"=>[{"id" => duo.id, "name"=>"<b>addréss</b> of state duo"}], "tokens"=>["Big", "state", "building"]}
+      {"name"=>"Émpire state building", "addresses"=>[{"id" => uno.id, "name"=>"<b>address</b> uno"}]},
+      {"name"=>"Big state building", "addresses"=>[{"id" => duo.id, "name"=>"<b>addréss</b> of state duo"}]}
     ], tsmodels.map(&:highlights))
   end
-  
+
+  test '::highlights(query) with an attribute that is an array of strings' do
+    Property.create(name: 'red barn', metadata: 'rustic,wooden,vintage')
+    Property.create(name: 'blue cottage', metadata: 'modern,vintage,cozy')
+
+    tsmodels = Runestone::Model.search('vintage')
+    Runestone::Model.highlight(tsmodels, 'vintage')
+
+    assert_equal([
+      { "name"=>"red barn", "addresses"=>[], "tags"=>["rustic", "wooden", "<b>vintage</b>"] },
+      { "name"=>"blue cottage", "addresses"=>[], "tags"=>["modern", "<b>vintage</b>", "cozy"] }
+    ], tsmodels.map(&:highlights))
+  end
+
 end
