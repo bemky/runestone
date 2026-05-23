@@ -103,11 +103,9 @@ class ActiveSupport::TestCase
   end
 
   def assert_no_sql(*not_expected)
-    return_value = nil
     queries_ran = block_given? ? SQLLogger.log.size : 0
 
-    return_value = yield if block_given?
-
+    yield if block_given?
   ensure
     failed_patterns = []
     queries_ran = SQLLogger.log[queries_ran...]
@@ -123,8 +121,6 @@ class ActiveSupport::TestCase
       Queries Ran (queries_ran.size):
         - #{queries_ran.map{|l| l.gsub(/\n\s*/, "\n    ")}.join("\n  - ")}
     MSG
-    
-    return_value
   end
 
   def sql_equal(expected, sql)

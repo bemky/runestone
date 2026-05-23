@@ -35,7 +35,7 @@ class Runestone::Settings
       attributes[name] = if value[0].is_a?(Proc)
         record.instance_exec(&value[0])
       else
-        rv = record.send(name)
+        record.send(name)
       end
     end
 
