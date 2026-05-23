@@ -24,10 +24,10 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'byebug'
   s.add_development_dependency 'faker'
   s.add_development_dependency 'simplecov'
-  s.add_development_dependency 'activejob', '>= 7.0'
+  s.add_development_dependency 'activejob', '>= 7.1'
 
   # Runtime
   s.add_runtime_dependency 'arel-extensions', '>= 7.0.0'
-  s.add_runtime_dependency 'activerecord', '>= 7.0'
+  s.add_runtime_dependency 'activerecord', '>= 7.1'
   s.add_runtime_dependency 'stream_parser', ">= 0.4"
 end
